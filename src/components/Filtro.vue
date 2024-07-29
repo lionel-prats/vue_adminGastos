@@ -3,11 +3,13 @@
 </script>
 <template>
     <div>
-        <h1>Filtros</h1>
+        <h2>Filtros</h2>
     </div>
 </template>
 
 
 <style scoped>
-
+    h2 {
+        color: blue;
+    }
 </style>
