@@ -3,6 +3,13 @@
 
     const emit = defineEmits(["ocultar-modal"])
 
+    const props = defineProps({
+        modal: {
+            type: Object,
+            required: true,
+        },
+    })
+
 </script>
 
 <template>
@@ -14,8 +21,11 @@
                 @click="$event => $emit('ocultar-modal')"
             />
         </div>
-        <div class="contenedor">
-            <form>
+        <div 
+            class="contenedor contenedor-formulario"
+            :class="[modal.animar ? 'animar' : 'cerrar']"    
+        >
+            <form class="nuevo-gasto">
                 <legend>Añadir Gasto</legend>
                 <div class="campo">
                     <label for="nombre">Nombre Gasto:</label>
@@ -60,7 +70,6 @@
     .modal {
         position: absolute;
         background-color: rgb(0 0 0 / .9);
-        background-color: salmon; opacity: .9;
         top: 0;
         right: 0;
         bottom: 0;
@@ -74,6 +83,54 @@
     }
     .cerrar-modal img {
         width: 3rem;
+        cursor: pointer;
+    }
+
+    .contenedor-formulario {
+        transition-property: all;
+        transition-duration: 300ms;
+        transition-timing-function: ease-in;
+        opacity: 0;
+    }
+    .contenedor-formulario.animar {
+        opacity: 1; 
+    }
+    
+    .contenedor-formulario.cerrar {
+        opacity: 0; 
+    }
+
+    .nuevo-gasto {
+        margin: 10rem auto 0 auto;
+        display: grid;
+        gap: 2rem;
+    }
+    .nuevo-gasto legend {
+        text-align: center;
+        color: var(--blanco);
+        font-size: 3rem;
+        font-weight: 700;
+    }
+    .campo {
+        display: grid;
+        gap: 1rem;
+    }
+    .nuevo-gasto input,
+    .nuevo-gasto select {
+        background-color: var(--gris-claro);
+        border-radius: 1rem;
+        padding: 1rem;
+        border: none;
+        font-size: 2.2rem;
+    }
+    .nuevo-gasto label{
+        color: var(--blanco);
+        font-size: 3rem;
+    }
+    .nuevo-gasto input[type="submit"] {
+        background-color: var(--azul);
+        color: var(--blanco);
+        font-weight: 700;
         cursor: pointer;
     }
 
