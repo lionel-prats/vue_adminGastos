@@ -8,3 +8,9 @@ export const formatearCantidad = cantidad => {
         currency: currency
     })
 }
+
+export const generarId = () => {
+    const fecha = Date.now().toString(36)
+    const random = Math.random().toString(36).substring(2)
+    return random + fecha
+}
