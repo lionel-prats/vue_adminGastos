@@ -4,6 +4,8 @@
   import Presupuesto from "./components/Presupuesto.vue"
   import ControlPresupuesto from "./components/ControlPresupuesto.vue"
   import Modal from "./components/Modal.vue"
+  import Gasto from "./components/Gasto.vue"
+
   import {generarId} from "./helpers"
 
   import iconoNuevoGasto from "./assets/img/nuevo-gasto.svg"
@@ -50,7 +52,8 @@
       id: generarId(),
     })
     ocultarModal()
-    Object.assign(gasto, {
+
+    Object.assign(gasto, { // reseteamos el stat gasto (v126)
       nombre: "",
       cantidad: "",
       categoria: "",
@@ -78,6 +81,17 @@
       </div>
     </header>
     <main v-if="presupuesto">
+
+      <div class="listado-gastos contenedor">
+        <h2>{{ gastos.length > 0 ? "Gastos" : "No hay gastos"}}</h2>
+        <Gasto 
+          v-for="gasto in gastos"
+          :key="gasto.id"
+          :gasto="gasto"
+        />
+
+      </div>
+
       <div class="crear-gasto">
         <img 
           :src="iconoNuevoGasto" 
@@ -161,5 +175,14 @@
   .crear-gasto img {
     width: 5rem;
     cursor: pointer;
+  }
+  .listado-gastos {
+    background-color: lightblue;
+    margin-top: 10rem;
+
+  }
+  .listado-gastos h2 {
+    font-weight: 900;
+    color: var(--gris-oscuro);
   }
 </style>
