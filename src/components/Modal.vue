@@ -1,12 +1,12 @@
 <script setup>
-    import {ref} from "vue"
+    import {ref, computed} from "vue"
 
     import cerrarModal from "../assets/img/cerrar.svg"
     import Alerta from "./Alerta.vue"
 
     const error = ref("")
 
-    const emit = defineEmits(["ocultar-modal", "guardar-gasto", "update:nombre", "update:cantidad", "update:categoria"])
+    const emit = defineEmits(["ocultar-modal", "guardar-gasto", "update:nombre", "update:cantidad", "update:categoria", "eliminar-gasto"])
 
     const props = defineProps({
         modal: {
@@ -29,10 +29,15 @@
             type: Number,
             required: true,
         },
+        id: {
+            type: [String, null],
+            required: true,
+        },
     })
 
+    const gastoCantidadAnterior = props.cantidad
     const agregarGasto = () => {
-        const {nombre, cantidad, categoria, disponible} = props
+        const {nombre, cantidad, categoria, disponible, id} = props
         if([nombre, cantidad, categoria].includes("")){
             error.value = "Todos los campos son obligatorios"
             setTimeout(() => {
@@ -47,16 +52,35 @@
             }, 3000);
             return 
         } 
-        // validar que el usuario no gaste mas de lo disponible
-        if(cantidad > disponible){
-            error.value = `Saldo insuficuente. Disponible $${disponible}.`
-            setTimeout(() => {
-                error.value = ""
-            }, 3000);
-            return 
-        } 
+
+        // bloque para validar que el usuario no pueda asignar a un gasto mas dinero del presupuesto disponible (tanto si es un nuevo gasto como si esta editanto uno ya existente)
+        if(id) { 
+            // si id != null, se esta editando un gasto existente 
+            // entonces consideramos la cantidad previa del gasto para validar si el usuario se esta excediendo del saldo disponible en caso de que quiera actualizar el valor (v137)
+            if(cantidad > gastoCantidadAnterior + disponible){
+                error.value = `Saldo insuficuente. Disponible $${disponible + gastoCantidadAnterior}.`
+                setTimeout(() => {
+                    error.value = ""
+                }, 3000);
+                return 
+            } 
+        } else {
+            // si id === null, se trata de un gasto nuevo, por lo que no hace falta considerar la camtidad anterior (el gasto es nuevo, gastoCantidadAnterior = "") (v137)
+            if(cantidad > disponible){
+                error.value = `Saldo insuficuente. Disponible $${disponible}.`
+                setTimeout(() => {
+                    error.value = ""
+                }, 3000);
+                return 
+            } 
+        }
         emit("guardar-gasto")
     }
+
+    // computedProperty para renderizar de forma dinamica la leyenda del <legend> y del <input type="submit"> del form (v138)
+    const isEditing = computed( () => {
+        return props.id
+    })
 
 </script>
 
@@ -77,7 +101,9 @@
                 class="nuevo-gasto"
                 @submit.prevent="agregarGasto"        
             >
-                <legend>Añadir Gasto</legend>
+                <legend>{{ isEditing ? 'Editar Registro' : 'Crear Nuevo Registro' }}</legend>
+                <!-- <legend>{{ id ? 'Editar Registro' : 'Crear Nuevo Registro' }}</legend> -->
+
                 <Alerta v-if="error">
                     {{error}}
                 </Alerta>
@@ -100,6 +126,7 @@
                         :value="cantidad"
                         @input="$emit('update:cantidad', +$event.target.value)"
                     />
+                    <!-- con "+$event.target.value" estoy casteando el String a Number (funcionalidad nativa de JS) (v121) -->
                 </div>
                 <div class="campo">
                     <label for="categoría">Categoría:</label>
@@ -120,11 +147,21 @@
                 </div>
                 <input 
                     type="submit" 
-                    value="Añadir Gasto"
+                    :value="[isEditing ? 'Guardar Cambios' : 'Añadir Gasto']"           
                 />
+                <!-- :value="[id ? 'Guardar Cambios' : 'Añadir Gasto']"            -->
             </form>
-        </div>
 
+            <button
+                type="button"
+                class="btn-eliminar"
+                v-if="isEditing"
+                @click="$emit('eliminar-gasto', id)"
+            >
+                Eliminar Gasto
+            </button>
+
+        </div>
     </div>
 </template>
 
@@ -195,5 +232,15 @@
         font-weight: 700;
         cursor: pointer;
     }
-
+    .btn-eliminar {
+        border: none;
+        padding: 1rem;
+        width: 100%;
+        background-color: #ef4444;
+        font-weight: 700;
+        font-size: 1.6rem;
+        color: var(--blanco);
+        margin-top: 10rem;
+        cursor: pointer;
+    }
 </style>

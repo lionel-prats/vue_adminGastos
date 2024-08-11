@@ -1,9 +1,12 @@
 <script setup>
   import {ref, reactive, watch} from "vue"
   
+  import {gastosFake} from "./data/gastosFake" // import fake para carga rapida de gastos inyectandolo en el state gastos (v141)
+
   import Presupuesto from "./components/Presupuesto.vue"
   import ControlPresupuesto from "./components/ControlPresupuesto.vue"
   import Modal from "./components/Modal.vue"
+  import Filtros from "./components/Filtros.vue"
   import Gasto from "./components/Gasto.vue"
 
   import {generarId} from "./helpers"
@@ -17,6 +20,7 @@
   const presupuesto = ref(0) // state
   const disponible = ref(0) // state
   const gastado = ref(0) // state
+  const filtro = ref("") // state (v141)
 
   const gasto = reactive({  // state
     nombre: "",
@@ -27,6 +31,7 @@
   })
 
   const gastos = ref([]) // state
+  // const gastos = ref(gastosFake) // state
 
   // este watch va a estar excuchando permanentemente por cambios en el state gastos, y el callback que le pasamos como segundo parametro se va a ejjecutar cada vez que se modifique este state (v131)
   watch(gastos, () => { 
@@ -77,31 +82,30 @@
   }
 
   const guardarGasto = () => {
-    
-    /* if(gasto.id){
+    if(gasto.id){ // editando gasto existente (v136)
       const {id} = gasto
       const i = gastos.value.findIndex(gasto => gasto.id === id)
       gastos.value[i] = {...gasto};
-    } else {
+    } else { // agregando gasto nuevo (v136)
       gastos.value.push({
         ...gasto,
         id: generarId(),
       })
-    } */
-
-    gastos.value.push({
-      ...gasto,
-      id: generarId(),
-    })
+    }
     ocultarModal()
-    reiniciarStateGasto()
   }
 
-  // v134
-  const seleccionarGasto = id => { // custom event
+  const seleccionarGasto = id => { // custom event (v134)
     const gastoEditar = gastos.value.filter( gasto => gasto.id === id)[0];
     Object.assign(gasto, gastoEditar)
     mostrarModal()
+  }
+
+  const eliminarGasto = id => { // custom event (v140)
+    if(confirm("Eliminar?")) {
+      gastos.value = gastos.value.filter( gastoState => gastoState.id !== id);
+      ocultarModal()
+    }
   }
 
 </script>
@@ -126,7 +130,9 @@
       </div>
     </header>
     <main v-if="presupuesto">
-
+      <Filtros 
+        v-model:filtro="filtro"
+      />
       <div class="listado-gastos contenedor">
         <h2>{{ gastos.length > 0 ? "Gastos" : "No hay gastos"}}</h2>
         <Gasto 
@@ -151,8 +157,10 @@
         v-if="modal.mostrar"
         @ocultar-modal="ocultarModal"
         @guardar-gasto="guardarGasto"  
+        @eliminar-gasto="eliminarGasto"
         :modal="modal"
         :disponible="disponible"
+        :id="gasto.id"
         v-model:nombre="gasto.nombre"
         v-model:cantidad="gasto.cantidad"
         v-model:categoria="gasto.categoria"
