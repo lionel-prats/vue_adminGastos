@@ -1,5 +1,5 @@
 <script setup>
-  import {ref, reactive} from "vue"
+  import {ref, reactive, watch} from "vue"
   
   import Presupuesto from "./components/Presupuesto.vue"
   import ControlPresupuesto from "./components/ControlPresupuesto.vue"
@@ -14,10 +14,11 @@
     mostrar: false,
     animar: false,
   })
-  const presupuesto = ref(0)
-  const disponible = ref(0)
+  const presupuesto = ref(0) // state
+  const disponible = ref(0) // state
+  const gastado = ref(0) // state
 
-  const gasto = reactive({
+  const gasto = reactive({  // state
     nombre: "",
     cantidad: "",
     categoria: "",
@@ -25,7 +26,26 @@
     fecha: Date.now(), // número de milisegundos transcurridos desde las 00:00:00 UTC del 1 de enero de 1970 (v120)
   })
 
-  const gastos = ref([])
+  const gastos = ref([]) // state
+
+  // este watch va a estar excuchando permanentemente por cambios en el state gastos, y el callback que le pasamos como segundo parametro se va a ejjecutar cada vez que se modifique este state (v131)
+  watch(gastos, () => { 
+    const totalGastado = gastos.value.reduce( (total, gasto) => total + (gasto.cantidad), 0)
+    gastado.value = totalGastado;
+    disponible.value = presupuesto.value - gastado.value
+
+  }, {
+      deep: true 
+  })
+  
+  // watch para resetear el state gasto cada vez que se cierre el form modal para agregar un nuevo gasto (v135)
+  watch(modal, () => { 
+    if(!modal.mostrar) {
+      reiniciarStateGasto()
+    }
+  }, {
+      deep: true 
+  })
 
   const definirPresupuesto = cantidad => {
     presupuesto.value = cantidad
@@ -46,14 +66,8 @@
     }, 300);
   }
 
-  const guardarGasto = () => {
-    gastos.value.push({
-      ...gasto,
-      id: generarId(),
-    })
-    ocultarModal()
-
-    Object.assign(gasto, { // reseteamos el stat gasto (v126)
+  const reiniciarStateGasto = () => {
+    Object.assign(gasto, {
       nombre: "",
       cantidad: "",
       categoria: "",
@@ -62,10 +76,40 @@
     })
   }
 
+  const guardarGasto = () => {
+    
+    /* if(gasto.id){
+      const {id} = gasto
+      const i = gastos.value.findIndex(gasto => gasto.id === id)
+      gastos.value[i] = {...gasto};
+    } else {
+      gastos.value.push({
+        ...gasto,
+        id: generarId(),
+      })
+    } */
+
+    gastos.value.push({
+      ...gasto,
+      id: generarId(),
+    })
+    ocultarModal()
+    reiniciarStateGasto()
+  }
+
+  // v134
+  const seleccionarGasto = id => { // custom event
+    const gastoEditar = gastos.value.filter( gasto => gasto.id === id)[0];
+    Object.assign(gasto, gastoEditar)
+    mostrarModal()
+  }
+
 </script>
 
 <template>
-  <div>
+  <div 
+    :class="{fijar: modal.mostrar}"
+  >
     <header>
       <h1>Planificador de gastos</h1>
       <div class="contenedor-header contenedor sombra">
@@ -77,6 +121,7 @@
           v-else
           :presupuesto="presupuesto"
           :disponible="disponible"
+          :gastado="gastado"
         />
       </div>
     </header>
@@ -88,7 +133,9 @@
           v-for="gasto in gastos"
           :key="gasto.id"
           :gasto="gasto"
+          @seleccionar-gasto="seleccionarGasto"
         />
+        <!-- @mostrar-modal="mostrarModal" -->
 
       </div>
 
@@ -105,6 +152,7 @@
         @ocultar-modal="ocultarModal"
         @guardar-gasto="guardarGasto"  
         :modal="modal"
+        :disponible="disponible"
         v-model:nombre="gasto.nombre"
         v-model:cantidad="gasto.cantidad"
         v-model:categoria="gasto.categoria"
@@ -142,6 +190,13 @@
   h2 {
     font-size: 3rem;
   }
+
+  /* estilos paar el modal de crear nuevo gasto (v130) */
+  .fijar { 
+    overflow: hidden;
+    height: 100vh;
+  }
+
   header {
     background-color: var(--azul);
   }
@@ -177,7 +232,6 @@
     cursor: pointer;
   }
   .listado-gastos {
-    background-color: lightblue;
     margin-top: 10rem;
 
   }

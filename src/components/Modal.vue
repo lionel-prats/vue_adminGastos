@@ -25,10 +25,14 @@
             type: String,
             required: true,
         },
+        disponible: {
+            type: Number,
+            required: true,
+        },
     })
 
     const agregarGasto = () => {
-        const {nombre, cantidad, categoria} = props
+        const {nombre, cantidad, categoria, disponible} = props
         if([nombre, cantidad, categoria].includes("")){
             error.value = "Todos los campos son obligatorios"
             setTimeout(() => {
@@ -38,6 +42,14 @@
         } 
         if(cantidad <= 0){
             error.value = "Cantidad no válida"
+            setTimeout(() => {
+                error.value = ""
+            }, 3000);
+            return 
+        } 
+        // validar que el usuario no gaste mas de lo disponible
+        if(cantidad > disponible){
+            error.value = `Saldo insuficuente. Disponible $${disponible}.`
             setTimeout(() => {
                 error.value = ""
             }, 3000);

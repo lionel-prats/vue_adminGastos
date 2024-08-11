@@ -10,6 +10,8 @@
 
     import {formatearCantidad, formatearFecha} from "../helpers"
 
+    /* const emit =  */defineEmits(["seleccionar-gasto"/* , "mostrar-modal" */])
+
     const props = defineProps({
         gasto: {
             type: Object,
@@ -33,14 +35,19 @@
         <div class="contenido">
             <img 
                 class="icono"
-                style="width: 5rem"
                 :src="diccionarioIconos[gasto.categoria]" 
                 alt="Icono gasto"
             >
             <div class="detalles">
                 <p class="categoria">{{ gasto.categoria }}</p>
-                <p class="nombre">{{ gasto.nombre }}</p>
-                <p class="fecha">{{ formatearFecha(gasto.fecha) }}</p>
+                <p 
+                    class="nombre"
+                    @click="$event => $emit('seleccionar-gasto', gasto.id)"
+                >{{ gasto.nombre }}</p>
+                <p class="fecha">
+                    Fecha:
+                    <span>{{ formatearFecha(gasto.fecha) }}</span>
+                </p>
             </div>
         </div>
         <p class="cantidad">{{ formatearCantidad(gasto.cantidad) }}</p>
@@ -48,6 +55,49 @@
 </template>
 
 
-<style lang="scss" scoped>
-
+<style scoped>
+    .gasto {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .contenido {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        
+    }
+    .icono {
+        width: 5rem;
+    }
+    .detalles p {
+        margin: 0 0 1rem 0;
+    }
+    .categoria {
+        color: var(--gris);
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        font-weight: 900;
+    }
+    .nombre {
+        color: var(--gris-oscuro);
+        font-size: 2.4rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .fecha {
+        color: var(--gris-oscuro);
+        font-size: 1.6rem;
+        font-weight: 900;
+    }
+    .fecha span {
+        font-weight: 400;
+    }
+    .cantidad {
+        font-size: 3rem;
+        font-weight: 900;
+        margin: 0;
+    }
+    
 </style>
