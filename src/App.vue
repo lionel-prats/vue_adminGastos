@@ -1,5 +1,5 @@
 <script setup>
-  import {ref, reactive, watch} from "vue"
+  import {ref, reactive, watch, computed, onMounted} from "vue"
   
   import {gastosFake} from "./data/gastosFake" // import fake para carga rapida de gastos inyectandolo en el state gastos (v141)
 
@@ -33,12 +33,13 @@
   const gastos = ref([]) // state
   // const gastos = ref(gastosFake) // state
 
-  // este watch va a estar excuchando permanentemente por cambios en el state gastos, y el callback que le pasamos como segundo parametro se va a ejjecutar cada vez que se modifique este state (v131)
+  // este watch va a estar excuchando permanentemente por cambios en el state gastos, y el callback que le pasamos como segundo parametro se va a ejecutar cada vez que se modifique este state (v131)
   watch(gastos, () => { 
     const totalGastado = gastos.value.reduce( (total, gasto) => total + (gasto.cantidad), 0)
     gastado.value = totalGastado;
     disponible.value = presupuesto.value - gastado.value
 
+    localStorage.setItem("gastos", JSON.stringify(gastos.value))
   }, {
       deep: true 
   })
@@ -49,9 +50,26 @@
       reiniciarStateGasto()
     }
   }, {
-      deep: true 
+      deep: true // deep solo es necesario cuando aplicamos un watch a un array u objeto
   })
 
+  watch(presupuesto, () => {
+    localStorage.setItem("presupuesto", presupuesto.value)
+  })
+
+  onMounted(() => {
+    const presupuestoStorage = localStorage.getItem("presupuesto")
+    if(presupuestoStorage) {
+      presupuesto.value = +presupuestoStorage
+      disponible.value = Number(presupuestoStorage)
+    }
+    
+    const gastosStorage = localStorage.getItem("gastos")
+    if(gastosStorage) {
+      gastos.value = JSON.parse(gastosStorage)
+    }
+  })
+  
   const definirPresupuesto = cantidad => {
     presupuesto.value = cantidad
     disponible.value = cantidad
@@ -108,12 +126,31 @@
     }
   }
 
+  const gastosFiltrados = computed( () => {
+    if(filtro.value) {
+      return gastos.value.filter( gastoState => gastoState.categoria === filtro.value);
+    }
+    return gastos.value
+  })
+  
+  const resetearApp = () => { // custom event (v145)
+    if(confirm("Deseas reiniciar presupuesto y gastos?")) {
+      gastos.value = []
+      presupuesto.value = 0
+      // localStorage.removeItem('presupuesto');
+      // localStorage.removeItem('gastos');
+    }
+  }
+
 </script>
 
 <template>
+
+  <!-- inyecto una clase css de forma condicional (v130) vvv -->
   <div 
     :class="{fijar: modal.mostrar}"
   >
+    
     <header>
       <h1>Planificador de gastos</h1>
       <div class="contenedor-header contenedor sombra">
@@ -126,17 +163,19 @@
           :presupuesto="presupuesto"
           :disponible="disponible"
           :gastado="gastado"
+          @resetear-app="resetearApp"
         />
       </div>
     </header>
     <main v-if="presupuesto">
       <Filtros 
+        v-if="gastos.length"
         v-model:filtro="filtro"
       />
       <div class="listado-gastos contenedor">
-        <h2>{{ gastos.length > 0 ? "Gastos" : "No hay gastos"}}</h2>
+        <h2>{{ gastosFiltrados.length > 0 ? "Gastos" : "No hay gastos"}}</h2>
         <Gasto 
-          v-for="gasto in gastos"
+          v-for="gasto in gastosFiltrados"
           :key="gasto.id"
           :gasto="gasto"
           @seleccionar-gasto="seleccionarGasto"

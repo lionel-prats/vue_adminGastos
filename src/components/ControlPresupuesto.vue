@@ -1,6 +1,14 @@
 <script setup>
-    import imagen from "../assets/img/grafico.jpg"
+
+    import {computed} from "vue" 
+
+    // import imagen from "../assets/img/grafico.jpg"
+    import "vue3-circle-progress/dist/circle-progress.css"; // linea copiada de la documentacion de la libreria instalada (v146)
+    import CircleProgress from "vue3-circle-progress"; // linea copiada de la documentacion de la libreria instalada (v146)
+
     import {formatearCantidad} from "../helpers"
+
+    defineEmits(["resetear-app"])
 
     const props = defineProps({
         presupuesto: {
@@ -16,20 +24,37 @@
             required: true,
         },
     })
+
+    const porcentaje = computed( () => {
+        const {gastado, presupuesto} = props
+        return parseInt((gastado / presupuesto) * 100)
+        // return Math.round((gastado / presupuesto) * 100)
+    })
 </script>
 
 <template>
     <div class="dos-columnas">
         <div class="contenedor-grafico">
-            <img
+            <p class="porcentaje">{{porcentaje}}%</p>
+            <!-- <img
               class="img-fluid"
               :src="imagen"
               alt="grafico"
-            >
+            > -->
+            <circle-progress 
+                :percent="porcentaje" 
+                :size="250"
+                :border-width="30"
+                :border-bg-width="30"
+                fill-color="#3b82f6"
+                empty-color="#e1e1e1"
+            />
         </div>
         <div class="contenedor-presupuesto">
             <button
                 class="reset-app"
+                type="button"
+                @click="$emit('resetear-app')"
             >Resetear App
             </button>
             <p>
@@ -49,6 +74,21 @@
 </template>
 
 <style lang="scss" scoped>
+    .contenedor-grafico {
+        position: relative;
+    }
+    .porcentaje {
+        position: absolute;
+        margin: auto;
+        top: calc(50% - 1.5rem);
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 100;
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--gris-oscuro);
+    }
     .dos-columnas {
         display: flex;
         flex-direction: column;

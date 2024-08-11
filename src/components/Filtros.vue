@@ -20,7 +20,7 @@
                     :value="filtro" 
                     @input="$emit('update:filtro', $event.target.value)"
                 >
-                    <option value="">-- Seleccione --</option>
+                    <option value="">-- Todos los Gastos --</option>
                     <option value="ahorro">Ahorro</option>
                     <option value="comida">Comida</option>
                     <option value="casa">Casa</option>
